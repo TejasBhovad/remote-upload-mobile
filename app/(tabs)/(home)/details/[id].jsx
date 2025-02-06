@@ -1,11 +1,12 @@
-import { Link } from "expo-router";
+import { useLocalSearchParams } from "expo-router";
 import { View, Text, StyleSheet } from "react-native";
 
-export default function SettingsPage() {
+export default function DetailsScreen() {
+  const { id } = useLocalSearchParams();
+
   return (
     <View style={styles.container}>
-      <Text>Settings</Text>
-      <Link href="/details">View details</Link>
+      <Text>Details of user {id} </Text>
     </View>
   );
 }

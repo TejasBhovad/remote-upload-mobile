@@ -1,12 +1,10 @@
 import { Link } from "expo-router";
 import { View, Text, StyleSheet } from "react-native";
 
-export default function HomeScreen() {
+export default function RecentPage() {
   return (
     <View style={styles.container}>
-      <Text>Home</Text>
-      <Link href="/details/1">View first user details</Link>
-      <Link href="/details/2">View second user details</Link>
+      <Text>Recent</Text>
     </View>
   );
 }

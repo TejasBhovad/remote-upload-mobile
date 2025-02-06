@@ -19,11 +19,38 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
-        name="settings"
+        name="(recent)"
         options={{
-          title: "Settings",
+          title: "Recent",
           tabBarIcon: ({ color }) => (
-            <Ionicons name="settings" size={24} color={color} />
+            <Ionicons name="time" size={24} color={color} />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="(scan)"
+        options={{
+          title: "Scan",
+          tabBarIcon: ({ color }) => (
+            <Ionicons name="qr-code" size={24} color={color} />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="(upload)"
+        options={{
+          title: "Upload",
+          tabBarIcon: ({ color }) => (
+            <Ionicons name="cloud-upload" size={24} color={color} />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="(profile)"
+        options={{
+          title: "Profile",
+          tabBarIcon: ({ color }) => (
+            <Ionicons name="person" size={24} color={color} />
           ),
         }}
       />
