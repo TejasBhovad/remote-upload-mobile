@@ -1,10 +1,10 @@
 import { Link } from "expo-router";
 import { View, Text, StyleSheet } from "react-native";
-
+import { ThemedText } from "@/components/ThemedText";
 export default function UploadPage() {
   return (
     <View style={styles.container}>
-      <Text>Upload</Text>
+      <ThemedText type="title">Upload</ThemedText>
     </View>
   );
 }

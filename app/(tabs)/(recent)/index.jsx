@@ -1,10 +1,10 @@
 import { Link } from "expo-router";
 import { View, Text, StyleSheet } from "react-native";
-
+import { ThemedText } from "@/components/ThemedText";
 export default function RecentPage() {
   return (
     <View style={styles.container}>
-      <Text>Recent</Text>
+      <ThemedText type="title">Recent</ThemedText>
     </View>
   );
 }

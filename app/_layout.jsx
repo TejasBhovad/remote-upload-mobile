@@ -1,16 +1,21 @@
 import React from "react";
+import { StatusBar } from "expo-status-bar";
 import { Stack } from "expo-router";
-import { useColorScheme } from "react-native";
-import { DefaultTheme, DarkTheme } from "@react-navigation/native";
+import {
+  DarkTheme,
+  DefaultTheme,
+  ThemeProvider,
+} from "@react-navigation/native";
+import { useColorScheme } from "@/hooks/useColorScheme";
 
 export default function RootLayout() {
   const colorScheme = useColorScheme();
-
-  const theme = colorScheme === "dark" ? DarkTheme : DefaultTheme;
-
   return (
-    <Stack screenOptions={{ headerShown: false }} theme={theme}>
-      <Stack.Screen name="(tabs)" />
-    </Stack>
+    <ThemeProvider value={colorScheme === "dark" ? DarkTheme : DefaultTheme}>
+      <Stack screenOptions={{ headerShown: false }}>
+        <Stack.Screen name="(tabs)" />
+      </Stack>
+      <StatusBar style="auto" />
+    </ThemeProvider>
   );
 }

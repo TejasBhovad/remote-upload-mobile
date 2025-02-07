@@ -1,20 +1,45 @@
 import { Tabs } from "expo-router";
-import { Ionicons } from "@expo/vector-icons";
+import { Platform } from "react-native";
+import { HapticTab } from "@/components/HapticTab";
+import { IconSymbol } from "@/components/ui/IconSymbol";
+import TabBarBackground from "@/components/ui/TabBarBackground";
+import { Colors } from "@/constants/Colors";
+import { useColorScheme } from "@/hooks/useColorScheme";
 
 export default function TabLayout() {
+  const colorScheme = useColorScheme() ?? "light";
+
   return (
     <Tabs
       screenOptions={{
         headerShown: false,
-        tabBarActiveTintColor: "#f4511e",
+        tabBarActiveTintColor: Colors[colorScheme].tint,
+        tabBarInactiveTintColor: Colors[colorScheme].tabIconDefault,
+        tabBarButton: HapticTab,
+        tabBarBackground: TabBarBackground,
+        tabBarStyle: Platform.select({
+          ios: {
+            position: "absolute",
+            backgroundColor: Colors[colorScheme].card,
+            borderTopColor: Colors[colorScheme].border,
+          },
+          default: {
+            backgroundColor: Colors[colorScheme].card,
+            borderTopColor: Colors[colorScheme].border,
+          },
+        }),
       }}
     >
       <Tabs.Screen
         name="(home)"
         options={{
           title: "Home",
-          tabBarIcon: ({ color }) => (
-            <Ionicons name="home" size={24} color={color} />
+          tabBarIcon: ({ color, focused }) => (
+            <IconSymbol
+              size={28}
+              name={focused ? "house.fill" : "house"}
+              color={color}
+            />
           ),
         }}
       />
@@ -22,8 +47,12 @@ export default function TabLayout() {
         name="(recent)"
         options={{
           title: "Recent",
-          tabBarIcon: ({ color }) => (
-            <Ionicons name="time" size={24} color={color} />
+          tabBarIcon: ({ color, focused }) => (
+            <IconSymbol
+              size={28}
+              name={focused ? "clock.fill" : "clock"}
+              color={color}
+            />
           ),
         }}
       />
@@ -31,8 +60,12 @@ export default function TabLayout() {
         name="(scan)"
         options={{
           title: "Scan",
-          tabBarIcon: ({ color }) => (
-            <Ionicons name="qr-code" size={24} color={color} />
+          tabBarIcon: ({ color, focused }) => (
+            <IconSymbol
+              size={28}
+              name={focused ? "qrcode.viewfinder" : "qrcode"}
+              color={color}
+            />
           ),
         }}
       />
@@ -40,8 +73,12 @@ export default function TabLayout() {
         name="(upload)"
         options={{
           title: "Upload",
-          tabBarIcon: ({ color }) => (
-            <Ionicons name="cloud-upload" size={24} color={color} />
+          tabBarIcon: ({ color, focused }) => (
+            <IconSymbol
+              size={28}
+              name={focused ? "arrow.up.circle.fill" : "arrow.up.circle"}
+              color={color}
+            />
           ),
         }}
       />
@@ -49,8 +86,12 @@ export default function TabLayout() {
         name="(profile)"
         options={{
           title: "Profile",
-          tabBarIcon: ({ color }) => (
-            <Ionicons name="person" size={24} color={color} />
+          tabBarIcon: ({ color, focused }) => (
+            <IconSymbol
+              size={28}
+              name={focused ? "person.circle.fill" : "person.circle"}
+              color={color}
+            />
           ),
         }}
       />

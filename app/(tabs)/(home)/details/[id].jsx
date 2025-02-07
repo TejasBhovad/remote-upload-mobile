@@ -1,12 +1,13 @@
 import { useLocalSearchParams } from "expo-router";
 import { View, Text, StyleSheet } from "react-native";
-
+import { ThemedText } from "@/components/ThemedText";
 export default function DetailsScreen() {
   const { id } = useLocalSearchParams();
 
   return (
     <View style={styles.container}>
-      <Text>Details of user {id} </Text>
+      <ThemedText type="title">Details</ThemedText>
+      <ThemedText type="body">ID: {id}</ThemedText>
     </View>
   );
 }

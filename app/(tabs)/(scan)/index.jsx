@@ -1,10 +1,10 @@
 import { Link } from "expo-router";
 import { View, Text, StyleSheet } from "react-native";
-
+import { ThemedText } from "@/components/ThemedText";
 export default function ScanPage() {
   return (
     <View style={styles.container}>
-      <Text>Scan</Text>
+      <ThemedText type="title">Scan</ThemedText>
     </View>
   );
 }
