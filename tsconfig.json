@@ -4,7 +4,12 @@
     "strict": true,
     "baseUrl": ".",
     "paths": {
-      "@/*": ["./*"]
+      "@/*": [
+        "./*"
+      ],
+      "types": [
+        "nativewind/types"
+      ]
     },
     "module": "esnext",
     "moduleResolution": "bundler",
@@ -14,7 +19,10 @@
     "skipLibCheck": true,
     "esModuleInterop": true,
     "target": "esnext",
-    "lib": ["dom", "esnext"],
+    "lib": [
+      "dom",
+      "esnext"
+    ],
     "allowImportingTsExtensions": true,
     "isolatedModules": true,
     "noEmit": true
@@ -25,7 +33,8 @@
     "**/*.js",
     "**/*.jsx",
     ".expo/types/**/*.ts",
-    "expo-env.d.ts"
+    "expo-env.d.ts",
+    "nativewind-env.d.ts"
   ],
   "exclude": [
     "node_modules",
