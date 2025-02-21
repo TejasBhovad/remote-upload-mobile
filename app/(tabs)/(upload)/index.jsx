@@ -9,8 +9,8 @@ export default function UploadScreen() {
 
   const { openImagePicker, isUploading } = useImageUploader("videoAndImage", {
     onClientUploadComplete: (res) => {
-      if (res && res[0]?.url) {
-        setUploadedUrl(res[0].url);
+      if (res && res[0]?.ufsUrl) {
+        setUploadedUrl(res[0].ufsUrl);
         Alert.alert("Success", "File uploaded successfully!");
         console.log("Upload completed", res);
       }
