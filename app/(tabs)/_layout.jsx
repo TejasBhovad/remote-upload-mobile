@@ -52,11 +52,12 @@ export default function TabLayout() {
         tabBarStyle: Platform.select({
           ios: {
             position: "absolute",
-            backgroundColor: Colors[colorScheme].card,
+            backgroundColor: Colors[colorScheme].background,
             borderTopColor: Colors[colorScheme].border,
           },
           default: {
-            backgroundColor: Colors[colorScheme].card,
+            position: "absolute",
+            backgroundColor: Colors[colorScheme].background,
             borderTopColor: Colors[colorScheme].border,
           },
         }),

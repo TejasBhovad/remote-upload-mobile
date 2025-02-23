@@ -16,3 +16,7 @@ npm run expo start
 - ExpoJS
 - UploadThing
 - NativeWind
+
+## References
+
+- https://clerk.com/docs/components/unstyled/sign-out-button

@@ -9,7 +9,7 @@ export default function HomeScreen() {
     <View className="flex-1 h-full w-full bg-red-400 justify-center items-center">
       <ThemedText type="title">Home</ThemedText>
       <LinkText to="/details/1">View first user details</LinkText>
-      <LinkText to="/details/2">View second user details</LinkText>
+      <LinkText to="/details/2">View second usecr details</LinkText>
       <SignedIn>
         <Text>Hello {user?.emailAddresses[0].emailAddress}</Text>
         {/* <Text>{JSON.stringify(user)}</Text> */}
