@@ -104,7 +104,10 @@ export default function HomeScreen() {
           }}
         >
           Morning,{" "}
-          <Text style={{ color: Colors[colorScheme].tint }}>
+          <Text
+            style={{ color: Colors[colorScheme].tint }}
+            className="font-bold"
+          >
             {user?.fullName || "John Doe"}
           </Text>
         </Text>

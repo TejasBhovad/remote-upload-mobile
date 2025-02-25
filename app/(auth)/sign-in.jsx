@@ -1,11 +1,18 @@
 import React from "react";
 import * as WebBrowser from "expo-web-browser";
-import { Text, View, TouchableOpacity } from "react-native";
-import { Link } from "expo-router";
+import {
+  Text,
+  View,
+  TouchableOpacity,
+  SafeAreaView,
+  Platform,
+  StatusBar,
+} from "react-native";
 import { useSSO } from "@clerk/clerk-expo";
 import * as AuthSession from "expo-auth-session";
-import { ThemedText } from "@/components/ThemedText";
 import { Ionicons } from "@expo/vector-icons";
+import { Colors } from "@/constants/Colors";
+import { useColorScheme } from "@/hooks/useColorScheme";
 
 export const useWarmUpBrowser = () => {
   React.useEffect(() => {
@@ -21,6 +28,7 @@ WebBrowser.maybeCompleteAuthSession();
 export default function SignInPage() {
   useWarmUpBrowser();
   const { startSSOFlow } = useSSO();
+  const colorScheme = useColorScheme() ?? "light";
 
   const onPress = React.useCallback(async () => {
     try {
@@ -41,63 +49,123 @@ export default function SignInPage() {
   }, []);
 
   return (
-    <View className="flex-1 bg-white dark:bg-gray-900 px-6">
-      {/* Header Section */}
-      <View className="flex-1 justify-end pb-10">
-        <ThemedText type="title" className="text-4xl font-bold mb-3">
-          Welcome Back
-        </ThemedText>
-        <ThemedText type="body" className="text-gray-500 dark:text-gray-400">
-          Sign in to continue to your account
-        </ThemedText>
-      </View>
+    <SafeAreaView
+      style={{
+        flex: 1,
+        backgroundColor: Colors[colorScheme].background,
+        paddingTop: Platform.OS === "android" ? StatusBar.currentHeight : 0,
+      }}
+    >
+      <StatusBar
+        barStyle={colorScheme === "light" ? "dark-content" : "light-content"}
+      />
 
-      {/* Buttons Section */}
-      <View className="flex-1 justify-start pt-10 gap-4">
-        {/* Google Sign In Button */}
-        <TouchableOpacity
-          onPress={onPress}
-          className="flex-row items-center justify-center bg-white dark:bg-gray-800 px-6 py-4 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm"
+      <View style={{ flex: 1, padding: 24 }}>
+        {/* Header Section */}
+        <View
           style={{
-            elevation: 2,
+            flex: 1,
+            justifyContent: "flex-end",
+            alignItems: "center",
+            paddingBottom: 40,
           }}
         >
-          <Ionicons
-            name="logo-google"
-            size={24}
-            color="#4285F4"
-            style={{ marginRight: 12 }}
-          />
-          <Text className="text-gray-800 dark:text-white font-semibold text-base">
-            Continue with Google
+          <Text
+            style={{
+              color: Colors[colorScheme].text,
+              fontSize: 38,
+              fontWeight: "bold",
+              marginBottom: 12,
+              textAlign: "center",
+            }}
+          >
+            Welcome Back
           </Text>
-        </TouchableOpacity>
-
-        {/* Divider */}
-        <View className="flex-row items-center my-4">
-          <View className="flex-1 h-[1px] bg-gray-200 dark:bg-gray-700" />
-          <Text className="mx-4 text-gray-500 dark:text-gray-400">or</Text>
-          <View className="flex-1 h-[1px] bg-gray-200 dark:bg-gray-700" />
+          <Text
+            style={{
+              color: Colors[colorScheme].icon,
+              fontSize: 16,
+              textAlign: "center",
+            }}
+          >
+            Sign in to continue to your account
+          </Text>
         </View>
 
-        {/* Home Link */}
-        <Link href="/" asChild>
-          <TouchableOpacity className="flex-row justify-center py-4">
-            <Text className="text-gray-500 dark:text-gray-400">
-              Return to Home
+        {/* Buttons Section */}
+        <View
+          style={{
+            flex: 1,
+            justifyContent: "flex-start",
+            alignItems: "center",
+            paddingTop: 40,
+          }}
+        >
+          {/* Google Sign In Button */}
+          <TouchableOpacity
+            onPress={onPress}
+            style={{
+              flexDirection: "row",
+              alignItems: "center",
+              justifyContent: "center",
+              backgroundColor: Colors[colorScheme].muted,
+              paddingVertical: 16,
+              paddingHorizontal: 24,
+              borderRadius: 12,
+              width: "100%",
+              elevation: 2,
+              shadowColor: "#000",
+              shadowOffset: { width: 0, height: 1 },
+              shadowOpacity: 0.2,
+              shadowRadius: 2,
+            }}
+          >
+            <Ionicons
+              name="logo-google"
+              size={24}
+              color="#4285F4"
+              style={{ marginRight: 12 }}
+            />
+            <Text
+              style={{
+                color: Colors[colorScheme].text,
+                fontSize: 16,
+                fontWeight: "600",
+              }}
+            >
+              Continue with Google
             </Text>
           </TouchableOpacity>
-        </Link>
-      </View>
+        </View>
 
-      {/* Terms Section */}
-      <View className="mb-10">
-        <Text className="text-center text-gray-500 dark:text-gray-400 text-sm">
-          By continuing, you agree to our{" "}
-          <Text className="text-blue-500">Terms of Service</Text> and{" "}
-          <Text className="text-blue-500">Privacy Policy</Text>
-        </Text>
+        {/* Terms Section */}
+        <View style={{ marginBottom: 24 }}>
+          <Text
+            style={{
+              textAlign: "center",
+              color: Colors[colorScheme].icon,
+              fontSize: 14,
+            }}
+          >
+            By continuing, you agree to our{" "}
+            <Text
+              style={{
+                color: Colors[colorScheme].tint,
+              }}
+            >
+              Terms of Service
+            </Text>{" "}
+            and{" "}
+            <Text
+              style={{
+                color: Colors[colorScheme].tint,
+              }}
+            >
+              Privacy Policy
+            </Text>
+          </Text>
+        </View>
       </View>
-    </View>
+    </SafeAreaView>
   );
 }
