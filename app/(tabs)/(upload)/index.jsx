@@ -12,20 +12,21 @@ import {
   Dimensions,
 } from "react-native";
 import * as ImagePicker from "expo-image-picker";
+import * as DocumentPicker from "expo-document-picker";
 import { openSettings } from "expo-linking";
-import { MaterialIcons } from "@expo/vector-icons";
+import { MaterialIcons, Ionicons } from "@expo/vector-icons";
 import { Colors } from "@/constants/Colors";
 import { useColorScheme } from "@/hooks/useColorScheme";
 import { storeFiles, deleteFiles } from "@/app/api/fileService";
 import { Share } from "react-native";
 import QRCode from "react-native-qrcode-svg";
-import { useImageUploader } from "@/lib/uploadthing"; // Import the hook
+import { useImageUploader } from "@/lib/uploadthing"; // Keep original hook
 
 export default function UploadPage() {
-  const [selectedImages, setSelectedImages] = useState([]);
+  const [selectedItems, setSelectedItems] = useState([]); // Changed to selectedItems to be more generic
   const [uploadedUrls, setUploadedUrls] = useState([]);
   const [uploadCode, setUploadCode] = useState("");
-  //const [isUploading, setIsUploading] = useState(false); // No longer needed
+  const [localUploading, setLocalUploading] = useState(false);
 
   const colorScheme = useColorScheme() ?? "light";
   const windowWidth = Dimensions.get("window").width;
@@ -35,10 +36,26 @@ export default function UploadPage() {
   const { openImagePicker, isUploading } = useImageUploader("videoAndImage", {
     onClientUploadComplete: (res) => {
       if (res && res[0]?.ufsUrl) {
-        // Image uploaded successfully
-        const newUploadedUrl = { url: res[0].ufsUrl, name: "uploaded-image" }; // You might want to generate a better name
+        const fileName = res[0].name || "uploaded-file";
+        const fileType = res[0].type || "unknown";
+
+        // Create more detailed file object
+        const fileObj = {
+          uri: res[0].ufsUrl,
+          name: fileName,
+          type: fileType,
+          size: res[0].size,
+        };
+
+        const newUploadedUrl = {
+          url: res[0].ufsUrl,
+          name: fileName,
+          type: fileType,
+        };
+
         setUploadedUrls((prev) => [...prev, newUploadedUrl]);
-        setSelectedImages((prev) => [...prev, res[0].ufsUrl]); // Also update selected images for display
+        setSelectedItems((prev) => [...prev, fileObj]);
+        setLocalUploading(false);
 
         Alert.alert("Success", "File uploaded successfully!");
         console.log("Upload completed", res);
@@ -46,7 +63,6 @@ export default function UploadPage() {
         // Generate code if uploads are successful
         storeFiles([newUploadedUrl])
           .then((codeResponse) => {
-            // Pass array
             if (codeResponse && codeResponse.code) {
               setUploadCode(codeResponse.code);
             }
@@ -60,12 +76,14 @@ export default function UploadPage() {
     onUploadError: (error) => {
       Alert.alert("Error", error.message);
       console.error("Upload error:", error);
+      setLocalUploading(false);
     },
   });
 
-  const handleUpload = async () => {
+  // Handle image upload via ImagePicker
+  const handleImageUpload = async () => {
     try {
-      // Request permissions - Moved inside handleUpload for better control
+      // Request permissions
       const { status } =
         await ImagePicker.requestMediaLibraryPermissionsAsync();
 
@@ -81,26 +99,104 @@ export default function UploadPage() {
         return;
       }
 
+      // Set local uploading state
+      setLocalUploading(true);
+
+      // Fixed: Use the picker with the correct parameters
       // Launch image picker using the hook
       await openImagePicker({
-        source: "library",
+        source: "library", // Keep the original parameter name as in your hook
         allowsEditing: true,
         quality: 1,
+        // Remove the problematic mediaTypes parameter - let the default handle it
         onInsufficientPermissions: () => {
           Alert.alert("Error", "Insufficient permissions");
+          setLocalUploading(false);
         },
       });
     } catch (error) {
+      setLocalUploading(false);
       Alert.alert("Error", "Failed to pick or upload images");
       console.error(error);
     }
   };
 
-  const removeImage = (uriToRemove) => {
-    setSelectedImages((prev) => prev.filter((uri) => uri !== uriToRemove));
-    setUploadedUrls((prev) =>
-      prev.filter((upload) => upload.url !== uriToRemove)
+  // Handle document upload via DocumentPicker
+  const handleDocumentUpload = async () => {
+    try {
+      const result = await DocumentPicker.getDocumentAsync({
+        type: "*/*", // All file types
+        copyToCacheDirectory: true,
+        multiple: false,
+      });
+
+      if (!result.canceled && result.assets && result.assets[0]) {
+        const file = result.assets[0];
+        console.log("Selected file:", file);
+
+        // Create a file object
+        const fileObj = {
+          uri: file.uri,
+          name: file.name,
+          type: file.mimeType,
+          size: file.size,
+        };
+
+        // Add to selected items directly for display
+        setSelectedItems((prev) => [...prev, fileObj]);
+
+        // Create uploaded URL object
+        const newUploadedUrl = {
+          url: file.uri,
+          name: file.name,
+          type: file.mimeType,
+        };
+
+        setUploadedUrls((prev) => [...prev, newUploadedUrl]);
+
+        // Generate code
+        try {
+          const codeResponse = await storeFiles([newUploadedUrl]);
+          if (codeResponse && codeResponse.code) {
+            setUploadCode(codeResponse.code);
+          }
+        } catch (codeError) {
+          Alert.alert("Code Generation Error", codeError.message);
+          console.error(codeError);
+        }
+      }
+    } catch (error) {
+      Alert.alert("Error", "Failed to pick or upload files");
+      console.error(error);
+    }
+  };
+
+  const handleUpload = async () => {
+    // Show a dialog to choose between image or document upload
+    Alert.alert(
+      "Select File Type",
+      "What type of file would you like to upload?",
+      [
+        {
+          text: "Image/Video",
+          onPress: handleImageUpload,
+        },
+        {
+          text: "Document/Other",
+          onPress: handleDocumentUpload,
+        },
+        {
+          text: "Cancel",
+          style: "cancel",
+        },
+      ],
+      { cancelable: true }
     );
+  };
+
+  const removeItem = (index) => {
+    setSelectedItems((prev) => prev.filter((_, i) => i !== index));
+    setUploadedUrls((prev) => prev.filter((_, i) => i !== index));
   };
 
   const shareFiles = async () => {
@@ -114,7 +210,7 @@ export default function UploadPage() {
         await deleteFiles(uploadCode);
         // Reset state
         setUploadCode("");
-        setSelectedImages([]);
+        setSelectedItems([]);
         setUploadedUrls([]);
       }
     } catch (error) {
@@ -122,30 +218,137 @@ export default function UploadPage() {
     }
   };
 
-  const renderSelectedImages = () => {
-    return selectedImages.map((uri, index) => (
-      <View
-        key={index}
-        className="relative mb-4"
-        style={{ width: "100%", height: 200 }}
-      >
-        <Image
-          source={{ uri }}
-          style={{
-            width: "100%",
-            height: "100%",
-            borderRadius: 8,
-          }}
-          resizeMode="cover"
-        />
-        <TouchableOpacity
-          onPress={() => removeImage(uri)}
-          className="absolute top-2 right-2 bg-red-500 rounded-full p-2"
-        >
-          <MaterialIcons name="close" size={20} color="white" />
-        </TouchableOpacity>
-      </View>
-    ));
+  const getFileIcon = (fileType) => {
+    // Determine icon based on file type
+    if (!fileType) return "document";
+
+    if (fileType.startsWith("image/")) return "image";
+    if (fileType.startsWith("video/")) return "videocam";
+    if (fileType.startsWith("audio/")) return "headset";
+    if (fileType.includes("pdf")) return "picture-as-pdf";
+    if (fileType.includes("spreadsheet") || fileType.includes("excel"))
+      return "grid-view";
+    if (fileType.includes("presentation") || fileType.includes("powerpoint"))
+      return "slideshow";
+    if (fileType.includes("word") || fileType.includes("document"))
+      return "description";
+    if (fileType.includes("zip") || fileType.includes("compressed"))
+      return "folder-zip";
+
+    return "insert-drive-file";
+  };
+
+  const formatFileSize = (bytes) => {
+    if (!bytes) return "";
+
+    const sizes = ["Bytes", "KB", "MB", "GB", "TB"];
+    if (bytes === 0) return "0 Byte";
+    const i = parseInt(Math.floor(Math.log(bytes) / Math.log(1024)));
+    return Math.round(bytes / Math.pow(1024, i), 2) + " " + sizes[i];
+  };
+
+  const renderSelectedItems = () => {
+    return selectedItems.map((item, index) => {
+      // Handle both string URIs (old format) and object format
+      const isObject = typeof item === "object";
+      const uri = isObject ? item.uri : item;
+      const name = isObject ? item.name : "File";
+      const type = isObject ? item.type : "";
+      const size = isObject ? item.size : null;
+
+      // Determine if this is an image type
+      const isImage = type
+        ? type.startsWith("image/")
+        : uri.match(/\.(jpg|jpeg|png|gif)$/i);
+
+      if (isImage) {
+        // Render image preview for image files
+        return (
+          <View
+            key={index}
+            className="relative mb-4"
+            style={{ width: "100%", height: 200 }}
+          >
+            <Image
+              source={{ uri }}
+              style={{
+                width: "100%",
+                height: "100%",
+                borderRadius: 8,
+              }}
+              resizeMode="cover"
+            />
+            <TouchableOpacity
+              onPress={() => removeItem(index)}
+              className="absolute top-2 right-2 bg-red-500 rounded-full p-2"
+            >
+              <MaterialIcons name="close" size={20} color="white" />
+            </TouchableOpacity>
+          </View>
+        );
+      } else {
+        // Render file item for non-image files
+        return (
+          <View
+            key={index}
+            className="relative mb-4 p-4 flex-row items-center"
+            style={{
+              backgroundColor: Colors[colorScheme].muted,
+              borderRadius: 8,
+              width: "100%",
+              borderWidth: 1,
+              borderColor: colorScheme === "light" ? "#e0e0e0" : "#444444",
+            }}
+          >
+            <View
+              className="mr-3 rounded-lg justify-center items-center"
+              style={{
+                width: 48,
+                height: 48,
+                backgroundColor:
+                  colorScheme === "light" ? "#e6e6e6" : "#333333",
+              }}
+            >
+              <MaterialIcons
+                name={getFileIcon(type)}
+                size={28}
+                color={Colors[colorScheme].text}
+              />
+            </View>
+
+            <View style={{ flex: 1 }}>
+              <Text
+                style={{ color: Colors[colorScheme].text, fontWeight: "600" }}
+                numberOfLines={1}
+              >
+                {name}
+              </Text>
+              {size && (
+                <Text
+                  style={{
+                    color: colorScheme === "light" ? "#666666" : "#aaaaaa",
+                    fontSize: 12,
+                  }}
+                >
+                  {formatFileSize(size)}
+                </Text>
+              )}
+            </View>
+
+            <TouchableOpacity
+              onPress={() => removeItem(index)}
+              className="ml-2 p-2"
+              style={{
+                backgroundColor: "#e53e3e",
+                borderRadius: 20,
+              }}
+            >
+              <MaterialIcons name="close" size={18} color="white" />
+            </TouchableOpacity>
+          </View>
+        );
+      }
+    });
   };
 
   return (
@@ -175,19 +378,19 @@ export default function UploadPage() {
           Upload Files
         </Text>
 
-        {/* Image Selection */}
+        {/* File Selection */}
         <View
           className="rounded-lg p-4 mb-4"
           style={{
             backgroundColor: Colors[colorScheme].muted,
           }}
         >
-          {selectedImages.length > 0 ? (
-            renderSelectedImages()
+          {selectedItems.length > 0 ? (
+            renderSelectedItems()
           ) : (
-            <View className="items-center">
+            <View className="items-center py-6">
               <MaterialIcons
-                name="image"
+                name="cloud-upload"
                 size={64}
                 color={Colors[colorScheme].icon}
               />
@@ -195,7 +398,7 @@ export default function UploadPage() {
                 className="text-center mt-4 mb-4"
                 style={{ color: Colors[colorScheme].text }}
               >
-                No images selected
+                No files selected
               </Text>
             </View>
           )}
@@ -206,10 +409,10 @@ export default function UploadPage() {
               backgroundColor: Colors[colorScheme].tint,
             }}
             onPress={handleUpload}
-            disabled={isUploading}
+            disabled={isUploading || localUploading}
           >
             <MaterialIcons
-              name="add-photo-alternate"
+              name="add"
               size={20}
               color={Colors[colorScheme].text}
               style={{ marginRight: 8 }}
@@ -220,7 +423,7 @@ export default function UploadPage() {
                 fontWeight: "600",
               }}
             >
-              {isUploading ? "Uploading..." : "Select Images"}
+              {isUploading || localUploading ? "Uploading..." : "Select Files"}
             </Text>
           </TouchableOpacity>
         </View>
@@ -297,7 +500,7 @@ export default function UploadPage() {
                 onPress={() => {
                   deleteFiles(uploadCode);
                   setUploadCode("");
-                  setSelectedImages([]);
+                  setSelectedItems([]);
                   setUploadedUrls([]);
                 }}
               >
