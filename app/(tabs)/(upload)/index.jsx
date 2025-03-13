@@ -10,6 +10,7 @@ import {
   Dimensions,
   Alert,
 } from "react-native";
+import * as FileSystem from "expo-file-system";
 import * as ImagePicker from "expo-image-picker";
 import * as DocumentPicker from "expo-document-picker";
 import { openSettings } from "expo-linking";
@@ -20,6 +21,8 @@ import { storeFiles, deleteFiles } from "@/app/api/fileService";
 import { Share } from "react-native";
 import QRCode from "react-native-qrcode-svg";
 import { useImageUploader } from "@/lib/uploadthing";
+import { FileStorage } from "@/lib/fileStorage";
+import { useRouter } from "expo-router";
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -31,6 +34,7 @@ import Animated, {
 const AnimatedTouchable = Animated.createAnimatedComponent(TouchableOpacity);
 
 export default function UploadPage() {
+  const router = useRouter();
   const [selectedItems, setSelectedItems] = useState([]);
   const [uploadedUrls, setUploadedUrls] = useState([]);
   const [uploadCode, setUploadCode] = useState("");
@@ -44,6 +48,77 @@ export default function UploadPage() {
   const windowWidth = Dimensions.get("window").width;
   const qrCodeSize = windowWidth * 0.6;
 
+  // Helper function to save uploaded files to both systems
+  const saveUploadedFile = async (uri, name, type, size) => {
+    const fileObj = {
+      uri: uri,
+      name: name,
+      type: type,
+      size: size,
+    };
+
+    const newUploadedUrl = {
+      url: uri,
+      name: name,
+      type: type,
+    };
+
+    // Subtle fade animation
+    fileListOpacity.value = withTiming(0.7, { duration: 100 }, () => {
+      fileListOpacity.value = withTiming(1, { duration: 200 });
+    });
+
+    setSelectedItems((prev) => [...prev, fileObj]);
+    setUploadedUrls((prev) => [...prev, newUploadedUrl]);
+    // For remote URLs (starting with http or https), we need to download the file first
+    try {
+      let localUri = uri;
+
+      if (uri.startsWith("http")) {
+        // Create a temporary file path to download to
+        const fileExtension = name.split(".").pop() || "";
+        const tempFilePath = `${
+          FileSystem.cacheDirectory
+        }temp_${Date.now()}.${fileExtension}`;
+
+        console.log(`Downloading remote file to: ${tempFilePath}`);
+
+        const downloadResult = await FileSystem.downloadAsync(
+          uri,
+          tempFilePath
+        );
+
+        if (downloadResult.status !== 200) {
+          throw new Error(
+            `Failed to download file: Status ${downloadResult.status}`
+          );
+        }
+
+        localUri = downloadResult.uri;
+        console.log(`Downloaded successfully to: ${localUri}`);
+      }
+
+      // Now we can save the local file to FileStorage
+      await FileStorage.saveFile(localUri, name, type);
+      console.log("File saved to Recents:", name);
+    } catch (storageError) {
+      console.error("Error saving to recent files:", storageError);
+      Alert.alert(
+        "Storage Error",
+        "Could not save file to recent files: " + storageError.message
+      );
+    }
+
+    try {
+      const codeResponse = await storeFiles([newUploadedUrl]);
+      if (codeResponse && codeResponse.code) {
+        setUploadCode(codeResponse.code);
+      }
+    } catch (codeError) {
+      Alert.alert("Code Generation Error", codeError.message);
+    }
+  };
+
   // Use the useImageUploader hook
   const { openImagePicker, isUploading } = useImageUploader("videoAndImage", {
     onClientUploadComplete: (res) => {
@@ -51,37 +126,8 @@ export default function UploadPage() {
         const fileName = res[0].name || "uploaded-file";
         const fileType = res[0].type || "unknown";
 
-        const fileObj = {
-          uri: res[0].ufsUrl,
-          name: fileName,
-          type: fileType,
-          size: res[0].size,
-        };
-
-        const newUploadedUrl = {
-          url: res[0].ufsUrl,
-          name: fileName,
-          type: fileType,
-        };
-
-        // Subtle fade animation when adding a new file
-        fileListOpacity.value = withTiming(0.7, { duration: 100 }, () => {
-          fileListOpacity.value = withTiming(1, { duration: 200 });
-        });
-
-        setUploadedUrls((prev) => [...prev, newUploadedUrl]);
-        setSelectedItems((prev) => [...prev, fileObj]);
+        saveUploadedFile(res[0].ufsUrl, fileName, fileType, res[0].size);
         setLocalUploading(false);
-
-        storeFiles([newUploadedUrl])
-          .then((codeResponse) => {
-            if (codeResponse && codeResponse.code) {
-              setUploadCode(codeResponse.code);
-            }
-          })
-          .catch((codeError) => {
-            Alert.alert("Code Generation Error", codeError.message);
-          });
       }
     },
     onUploadError: (error) => {
@@ -146,37 +192,7 @@ export default function UploadPage() {
 
       if (!result.canceled && result.assets && result.assets[0]) {
         const file = result.assets[0];
-
-        const fileObj = {
-          uri: file.uri,
-          name: file.name,
-          type: file.mimeType,
-          size: file.size,
-        };
-
-        // Subtle fade animation
-        fileListOpacity.value = withTiming(0.7, { duration: 100 }, () => {
-          fileListOpacity.value = withTiming(1, { duration: 200 });
-        });
-
-        setSelectedItems((prev) => [...prev, fileObj]);
-
-        const newUploadedUrl = {
-          url: file.uri,
-          name: file.name,
-          type: file.mimeType,
-        };
-
-        setUploadedUrls((prev) => [...prev, newUploadedUrl]);
-
-        try {
-          const codeResponse = await storeFiles([newUploadedUrl]);
-          if (codeResponse && codeResponse.code) {
-            setUploadCode(codeResponse.code);
-          }
-        } catch (codeError) {
-          Alert.alert("Code Generation Error", codeError.message);
-        }
+        await saveUploadedFile(file.uri, file.name, file.mimeType, file.size);
       }
     } catch (error) {
       Alert.alert("Error", "Failed to pick or upload files");
@@ -231,6 +247,14 @@ export default function UploadPage() {
     } catch (error) {
       Alert.alert("Error", "Failed to share files");
     }
+  };
+
+  // Navigate to Recents with refresh parameter
+  const navigateToRecents = () => {
+    router.push({
+      pathname: "/recents",
+      params: { refresh: Date.now() },
+    });
   };
 
   const getFileIcon = (fileType) => {
@@ -567,7 +591,89 @@ export default function UploadPage() {
                 </Text>
               </TouchableOpacity>
             </View>
+
+            {/* View in Recents button */}
+            <TouchableOpacity
+              style={{
+                backgroundColor: "transparent",
+                borderRadius: 6,
+                paddingVertical: 10,
+                paddingHorizontal: 12,
+                alignItems: "center",
+                justifyContent: "center",
+                flexDirection: "row",
+                borderWidth: 0.5,
+                borderColor: Colors[colorScheme].tint,
+                marginTop: 12,
+                width: "100%",
+              }}
+              onPress={navigateToRecents}
+            >
+              <MaterialIcons
+                name="folder"
+                size={16}
+                color={Colors[colorScheme].tint}
+                style={{ marginRight: 4 }}
+              />
+              <Text
+                style={{
+                  color: Colors[colorScheme].tint,
+                  fontWeight: "500",
+                  fontSize: 13,
+                }}
+              >
+                View in My Files
+              </Text>
+            </TouchableOpacity>
           </Animated.View>
+        )}
+
+        {/* Status Information */}
+        {selectedItems.length > 0 && (
+          <View
+            className="rounded-md p-3 mb-4"
+            style={{
+              backgroundColor: Colors[colorScheme].muted,
+              borderWidth: 0.5,
+              borderColor: colorScheme === "light" ? "#e0e0e0" : "#333333",
+            }}
+          >
+            <Text
+              className="text-sm font-medium mb-2"
+              style={{
+                color: Colors[colorScheme].text,
+              }}
+            >
+              Upload Status
+            </Text>
+            <Text
+              style={{
+                color: colorScheme === "light" ? "#666666" : "#aaaaaa",
+                fontSize: 13,
+              }}
+            >
+              {selectedItems.length} file{selectedItems.length !== 1 ? "s" : ""}{" "}
+              selected
+            </Text>
+            <Text
+              style={{
+                color: colorScheme === "light" ? "#666666" : "#aaaaaa",
+                fontSize: 13,
+              }}
+            >
+              Last updated: {new Date().toLocaleTimeString()}
+            </Text>
+
+            <Text
+              className="text-xs mt-2"
+              style={{
+                color: Colors[colorScheme].tint,
+                fontStyle: "italic",
+              }}
+            >
+              Files are automatically added to your "My Files" for easy access
+            </Text>
+          </View>
         )}
       </ScrollView>
     </SafeAreaView>
