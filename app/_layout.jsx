@@ -1,6 +1,6 @@
 import { ClerkProvider, ClerkLoaded, useUser } from "@clerk/clerk-expo";
 import { tokenCache } from "@/cache";
-import "./../global.css";
+import "../global.css";
 import { StatusBar } from "expo-status-bar";
 import { Slot, Stack, useRouter, useSegments } from "expo-router";
 import {

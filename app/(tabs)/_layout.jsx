@@ -10,8 +10,8 @@ import { useColorScheme } from "@/hooks/useColorScheme";
 const TabIcon = ({ name, color, focused }) => {
   if (Platform.OS === "ios") {
     const iosIconMap = {
-      house: focused ? "house.fill" : "house",
-      clock: focused ? "clock.fill" : "clock",
+      // house: focused ? "house.fill" : "house",
+      // clock: focused ? "clock.fill" : "clock",
       qrcode: focused ? "qrcode.viewfinder" : "qrcode", // Updated iOS SF Symbol name
       "arrow.up.circle": focused ? "arrow.up.circle.fill" : "arrow.up.circle",
       "person.circle": focused ? "person.circle.fill" : "person.circle",
@@ -22,8 +22,8 @@ const TabIcon = ({ name, color, focused }) => {
     );
   }
   const iconMap = {
-    house: "home",
-    clock: "time",
+    // house: "home",
+    // clock: "time",
     qrcode: "qr-code",
     "arrow.up.circle": "cloud-upload",
     "person.circle": "person-circle",
@@ -63,20 +63,20 @@ export default function TabLayout() {
         }),
       }}
     >
-      <Tabs.Screen
+      {/* <Tabs.Screen
         name="(home)"
         options={{
           title: "Home",
           tabBarIcon: (props) => <TabIcon name="house" {...props} />,
         }}
-      />
-      <Tabs.Screen
+      /> */}
+      {/* <Tabs.Screen
         name="(recent)"
         options={{
           title: "Recent",
           tabBarIcon: (props) => <TabIcon name="clock" {...props} />,
         }}
-      />
+      /> */}
       <Tabs.Screen
         name="(scan)"
         options={{

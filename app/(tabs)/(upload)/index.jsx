@@ -488,7 +488,7 @@ export default function UploadPage() {
               }}
             >
               <QRCode
-                value={`RemoteUpload://scan/${uploadCode}`}
+                value={`https://remoteupload.vercel.app/f/${uploadCode}`}
                 size={qrCodeSize - 20}
                 backgroundColor="white"
                 color="#000"
