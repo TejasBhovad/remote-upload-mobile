@@ -242,7 +242,7 @@ export default function UploadPage() {
   const shareFiles = async () => {
     try {
       const result = await Share.share({
-        message: `Access your files with code: ${uploadCode}`,
+        message: `https://remoteupload.vercel.app/f/${uploadCode}`,
       });
     } catch (error) {
       Alert.alert("Error", "Failed to share files");
@@ -591,45 +591,11 @@ export default function UploadPage() {
                 </Text>
               </TouchableOpacity>
             </View>
-
-            {/* View in Recents button */}
-            <TouchableOpacity
-              style={{
-                backgroundColor: "transparent",
-                borderRadius: 6,
-                paddingVertical: 10,
-                paddingHorizontal: 12,
-                alignItems: "center",
-                justifyContent: "center",
-                flexDirection: "row",
-                borderWidth: 0.5,
-                borderColor: Colors[colorScheme].tint,
-                marginTop: 12,
-                width: "100%",
-              }}
-              onPress={navigateToRecents}
-            >
-              <MaterialIcons
-                name="folder"
-                size={16}
-                color={Colors[colorScheme].tint}
-                style={{ marginRight: 4 }}
-              />
-              <Text
-                style={{
-                  color: Colors[colorScheme].tint,
-                  fontWeight: "500",
-                  fontSize: 13,
-                }}
-              >
-                View in My Files
-              </Text>
-            </TouchableOpacity>
           </Animated.View>
         )}
 
         {/* Status Information */}
-        {selectedItems.length > 0 && (
+        {/* {selectedItems.length > 0 && (
           <View
             className="rounded-md p-3 mb-4"
             style={{
@@ -674,7 +640,7 @@ export default function UploadPage() {
               Files are automatically added to your "My Files" for easy access
             </Text>
           </View>
-        )}
+        )} */}
       </ScrollView>
     </SafeAreaView>
   );
